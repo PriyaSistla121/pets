@@ -1,0 +1,999 @@
+CustomerControllor.java
+package com.pack.PetShopMaanagment.controllor;
+
+
+import java.util.List;
+
+
+import javax.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.pack.PetShopMaanagment.repository.CustomerRepository;
+
+import com.pack.PetShopMaanagment.model.PetCustomer;
+@Controller
+public class CustomerControllor
+{
+	@Autowired
+	CustomerRepository customerRepository;
+	@RequestMapping("/")
+	public String home()
+	{
+		return "Home";
+	}
+	@RequestMapping("/registration")
+	public String getSignup()
+	{
+		return "Registration";
+	}
+	
+	@RequestMapping("/login")
+	public String getLogin()
+	{
+		return "Login";
+	}
+	
+	@PostMapping("/addUser")
+	public ModelAndView addUser(@RequestParam("userName") String name, PetCustomer petCustomer )
+	{
+		ModelAndView mv=new ModelAndView("success");
+		List<PetCustomer> list=customerRepository.findByUserName(name);
+		if(list.size()!=0)
+		{
+			mv.addObject("message", "Oops! There is already a user registered with the UserName provided.");
+		}
+		else
+		{
+			customerRepository.save(petCustomer);
+			mv.addObject("message","User has been successfully registered.");
+		}
+		return mv;
+	}
+	@GetMapping("/dummy")
+	public String dummy()
+	{
+		return "dummy";
+	}
+	@PostMapping("/login")
+	public String login_user(@RequestParam("userName") String name ,@RequestParam("customerPassword") String password,
+			HttpSession session,ModelMap modelMap)
+	{
+		PetCustomer petCustomer=	customerRepository.findByUsernamePassword(name, password);
+		if(petCustomer!=null)
+		{
+			String uname=petCustomer.getUserName();
+			String upass=petCustomer.getCustomerPassword();
+			if(name.equalsIgnoreCase(uname) && password.equalsIgnoreCase(upass))
+			{
+				session.setAttribute("username",name);
+				return "dummy";
+			}
+			else
+			{
+				modelMap.put("error", "Invalid Account");
+				return "login";
+			}
+		}
+		else
+		{
+			modelMap.put("error", "Invalid Account");
+			return "login";
+		}
+	}
+	@GetMapping(value = "/logout")
+	public String logoutUser(HttpSession session)
+	{
+	session.removeAttribute("userName");
+	session.invalidate();
+	return "redirect:/login";
+	}
+	
+}
+-----------------------
+PetControllor.java
+package com.pack.PetShopMaanagment.controllor;
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.pack.PetShopMaanagment.model.Pets;
+import com.pack.PetShopMaanagment.repository.PetRepository;
+import com.pack.PetShopMaanagment.service.PetService;
+@Controller
+public class PetControllor {
+	@Autowired
+	PetRepository petRepository;
+	@Autowired
+	PetService petsService;
+	
+	@RequestMapping("/pets")
+	public String home()
+	{
+		return "AddPet";
+	}
+	
+	@PostMapping("/addpet")
+	public ModelAndView addPet( Pets pets )
+	{
+		ModelAndView mv=new ModelAndView("dummy");
+			petRepository.save(pets );
+			mv.addObject("message","pet has been successfully registered.");
+		
+		return mv;
+	}
+	 
+
+@RequestMapping(value="/viewpets",method=RequestMethod.GET)
+	public String index (ModelMap modelMap)
+	{
+	modelMap.put("list", petsService.getAllPets());		return "viewsPet";
+}
+	
+-----------------------
+PetCustomer.java
+package com.pack.PetShopMaanagment.model;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+
+@Entity
+@Table(name="petcustomers")
+public class PetCustomer {
+	@Id
+private String userName;
+	private String customerFirstName;
+	private String customerLastName;
+	private String customerEmail;
+	private String customerPassword;
+	private String customerMobileNumber;
+	private String CityName;
+	private String pincode;
+	@Override
+	public String toString() {
+		return "PetCustomer [userName=" + userName + ", customerFirstName=" + customerFirstName + ", customerLastName="
+				+ customerLastName + ", customerEmail=" + customerEmail + ", customerPassword=" + customerPassword
+				+ ", customerMobileNumber=" + customerMobileNumber + ", CityName=" + CityName + ", pincode=" + pincode
+				+ "]";
+	}
+	public PetCustomer() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+	public PetCustomer(String userName, String customerFirstName, String customerLastName, String customerEmail,
+			String customerPassword, String customerMobileNumber, String cityName, String pincode) {
+		super();
+		this.userName = userName;
+		this.customerFirstName = customerFirstName;
+		this.customerLastName = customerLastName;
+		this.customerEmail = customerEmail;
+		this.customerPassword = customerPassword;
+		this.customerMobileNumber = customerMobileNumber;
+		CityName = cityName;
+		this.pincode = pincode;
+	}
+	public String getUserName() {
+		return userName;
+	}
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+	public String getCustomerFirstName() {
+		return customerFirstName;
+	}
+	public void setCustomerFirstName(String customerFirstName) {
+		this.customerFirstName = customerFirstName;
+	}
+	public String getCustomerLastName() {
+		return customerLastName;
+	}
+	public void setCustomerLastName(String customerLastName) {
+		this.customerLastName = customerLastName;
+	}
+	public String getCustomerEmail() {
+		return customerEmail;
+	}
+	public void setCustomerEmail(String customerEmail) {
+		this.customerEmail = customerEmail;
+	}
+	public String getCustomerPassword() {
+		return customerPassword;
+	}
+	public void setCustomerPassword(String customerPassword) {
+		this.customerPassword = customerPassword;
+	}
+	public String getCustomerMobileNumber() {
+		return customerMobileNumber;
+	}
+	public void setCustomerMobileNumber(String customerMobileNumber) {
+		this.customerMobileNumber = customerMobileNumber;
+	}
+	public String getCityName() {
+		return CityName;
+	}
+	public void setCityName(String cityName) {
+		CityName = cityName;
+	}
+	public String getPincode() {
+		return pincode;
+	}
+	public void setPincode(String pincode) {
+		this.pincode = pincode;
+	}
+	
+}
+	
+------------------------
+Pets.java
+package com.pack.PetShopMaanagment.model;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name="petsdetails")
+public class Pets {
+	@Id
+@GeneratedValue
+	private int petId;
+	public int getPetId() {
+		return petId;
+	}
+	public void setPetId(int petId) {
+		this.petId = petId;
+	}
+	public String getPetType() {
+		return petType;
+	}
+	public void setPetType(String petType) {
+		this.petType = petType;
+	}
+	public String getPurposre() {
+		return purposre;
+	}
+	public void setPurposre(String purposre) {
+		this.purposre = purposre;
+	}
+	public float getPetCost() {
+		return petCost;
+	}
+	public void setPetCost(float petCost) {
+		this.petCost = petCost;
+	}
+	public int getPetAge() {
+		return petAge;
+	}
+	public void setPetAge(int petAge) {
+		this.petAge = petAge;
+	}
+	public String getPetColour() {
+		return petColour;
+	}
+	public void setPetColour(String petColour) {
+		this.petColour = petColour;
+	}
+	public int getPetQuantity() {
+		return PetQuantity;
+	}
+	public void setPetQuantity(int petQuantity) {
+		PetQuantity = petQuantity;
+	}
+	@Override
+	public String toString() {
+		return "Pets [petId=" + petId + ", petType=" + petType + ", purposre=" + purposre + ", petCost=" + petCost
+				+ ", petAge=" + petAge + ", petColour=" + petColour + ", PetQuantity=" + PetQuantity + "]";
+	}
+	public Pets(int petId, String petType, String purposre, float petCost, int petAge, String petColour,
+			int petQuantity) {
+		super();
+		this.petId = petId;
+		this.petType = petType;
+		this.purposre = purposre;
+		this.petCost = petCost;
+		this.petAge = petAge;
+		this.petColour = petColour;
+		PetQuantity = petQuantity;
+	}
+	public Pets() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+	private String  petType;
+
+	private String purposre;
+	private float petCost;
+	private int petAge;
+	private String petColour;
+	private int PetQuantity;
+	
+}
+------------------
+CustomerRepository.java
+package com.pack.PetShopMaanagment.repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+
+import com.pack.PetShopMaanagment.model.PetCustomer;
+
+public interface CustomerRepository extends CrudRepository<PetCustomer,String> {
+	@Query("from PetCustomer where userName=?1")
+    public List<PetCustomer> findByUserName(String userName);
+    
+    @Query("from PetCustomer where userName=?1 and customerPassword=?2")
+    public PetCustomer findByUsernamePassword(String username,String password);
+}
+
+-----------------------
+PetRepository.java
+package com.pack.PetShopMaanagment.repository;
+
+
+
+
+package com.pack.PetShopMaanagment.repository;
+
+
+
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+
+
+
+import com.pack.PetShopMaanagment.model.Pets;
+
+public interface PetRepository  extends CrudRepository<Pets,Integer> {
+	//public interface PetRepository  extends CrudRepository<PetModel,String> {
+
+	@Query("from  Pets where petType=?1 and purposre=?2 and petCost=?3 and petAge=?4 and petColour=?5")
+    public Pets findByPetVariaties(String petType,String purposre,float petCost, int petAge,String  petColour  );
+}
+
+-------------------------------
+PetService.java
+package com.pack.PetShopMaanagment.service;
+
+
+
+import java.util.List;
+
+import com.pack.PetShopMaanagment.model.Pets;
+
+public interface PetService {
+
+	
+	Iterable<Pets> getAllPets();
+//List<Pets> getAllPets();
+	
+
+}
+-----------------
+ServiceImpl.java
+package com.pack.PetShopMaanagment.service;
+
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.pack.PetShopMaanagment.model.Pets;
+import com.pack.PetShopMaanagment.repository.PetRepository;
+@Service
+public class ServiceImpl implements PetService {
+	@Autowired
+	PetRepository petRepository;
+
+//	@Override
+//	public List<Pets> getAllPets() {
+//		// TODO Auto-generated method stub
+//		List<Pets> petList=new ArrayList<Pets>();
+//		petList=petRepository.findPets();
+//		return petList ;
+//	}
+
+	
+	
+
+
+	public Iterable<Pets> getAllPets() {
+
+		return petRepository.findAll();
+	}
+	
+}
+-----------------------
+application.properties
+spring.mvc.view.prefix=/WEB-INF/views/
+spring.mvc.view.suffix=.jsp
+server.port=8987
+spring.datasource.url=jdbc:mysql://localhost:3306/jpa
+spring.datasource.username=root
+spring.datasource.password=root
+spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+spring.jpa.show-sql = true
+spring.jpa.hibernate.ddl-auto = update
+spring.jpa.database-platform=org.hibernate.dialect.MySQL5InnoDBDialect
+-------------------------
+AddPet.jsp
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+<style>
+body {
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+* {
+	box-sizing: border-box;
+}
+/* Full-width input fields */
+input[type=text], input[type=password] {
+	width: 100%;
+	padding: 15px;
+	margin: 5px 0 22px 0;
+	display: inline-block;
+	border: none;
+	background: #f1f1f1;
+}
+/* Add a background color when the inputs get focus */
+input[type=text]:focus, input[type=password]:focus {
+	background-color: #ddd;
+	outline: none;
+}
+/* Set a style for all buttons */
+button {
+	background-color: #4CAF50;
+	color: white;
+	padding: 14px 20px;
+	margin: 8px 0;
+	border: none;
+	cursor: pointer;
+	width: 100%;
+	opacity: 0.9;
+}
+
+button:hover {
+	opacity: 1;
+}
+/* Extra styles for the cancel button */
+.cancelbtn {
+	padding: 14px 20px;
+	background-color: #f44336;
+}
+/* Float cancel and signup buttons and add an equal width */
+.cancelbtn, .signupbtn {
+	float: left;
+	width: 50%;
+}
+/* Add padding to container elements */
+.container {
+	padding: 16px;
+}
+/* The Modal (background) */
+.modal {
+	display: none; /* Hidden by default */
+	position: fixed; /* Stay in place */
+	z-index: 1; /* Sit on top */
+	left: 0;
+	top: 0;
+	width: 100%; /* Full width */
+	height: 100%; /* Full height */
+	overflow: auto; /* Enable scroll if needed */
+	background-color: #474e5d;
+	padding-top: 50px;
+}
+/* Modal Content/Box */
+.modal-content {
+	background-color: #fefefe;
+	margin: 5% auto 15% auto;
+	/* 5% from the top, 15% from the bottom and centered */
+	border: 1px solid #888;
+	width: 80%; /* Could be more or less, depending on screen size */
+}
+/* Style the horizontal ruler */
+hr {
+	border: 1px solid #f1f1f1;
+	margin-bottom: 25px;
+}
+
+/* The Close Button (x) */
+.close {
+	position: absolute;
+	right: 35px;
+	top: 15px;
+	font-size: 40px;
+	font-weight: bold;
+	color: #f1f1f1;
+}
+
+.close:hover, .close:focus {
+	color: #f44336;
+	cursor: pointer;
+}
+/* Clear floats */
+.clearfix::after {
+	content: "";
+	clear: both;
+	display: table;
+}
+/* Change styles for cancel button and signup button on extra small screens */
+@media screen and (max-width: 300px) {
+	.cancelbtn, .signupbtn {
+		width: 100%;
+	}
+}
+</style>
+
+</head>
+<body>
+	<form action="/addpet" style="border: 1px solid #ccc" method="post">
+		<div class="container">
+			<h1>AddPet</h1>
+
+			<hr>
+		<label for="petType"><b>PetType</b></label> <input type="text"
+				placeholder="Enter  PetType" name="petType" required> 
+				
+				<label
+				for="purposre"><b>Purposre</b></label> <input type="text"
+				placeholder="Residential/Miltary" name="purposre" required>
+
+			<label for="petCost"><b>Cost</b> </label> <input
+				type="text" placeholder="Cost in rupees" name="petCost"
+				required>
+				 <label for="petAge"><b> PetAge</b>
+			</label> <input type="text" placeholder="Enter Age" name="petAge"
+				required> <label for="petColour"><b>Colour</b>
+
+			</label> <input type="text" placeholder="Enter Colour"
+				name="petColour" required>
+
+			<div class="clearfix">
+			
+				<button type="submit" class="signupbtn">AddPet</button>
+			</div>
+		</div>
+	</form>
+</body>
+</html>
+-----------
+dummy.jsp
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+hi
+ <h3>Success Page</h3>
+    <%
+        
+         response.setHeader("Cache-control", "no-cache, no-store, must-revalidate");
+        
+        if(session.getAttribute("username")==null)
+        {
+            response.sendRedirect("/login");
+        }
+    
+    %>
+    Welcome, ${sessionScope.username }
+    <br>
+     <a href="/pets">AddPet</a>
+     <a href="/viewpets">ViewPet</a>
+    <a href="${pageContext.request.contextPath }/logout">Logout</a>
+</body>
+</html>	
+----------------------
+Home.jsp
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+hi
+ <h3>Success Page</h3>
+    <%
+        
+         response.setHeader("Cache-control", "no-cache, no-store, must-revalidate");
+        
+        if(session.getAttribute("username")==null)
+        {
+            response.sendRedirect("/login");
+        }
+    
+    %>
+    Welcome, ${sessionScope.username }
+    <br>
+     <a href="/pets">AddPet</a>
+     <a href="/viewpets">ViewPet</a>
+    <a href="${pageContext.request.contextPath }/logout">Logout</a>
+</body>
+</html>
+------
+Login.jsp
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1" isELIgnored="false"%>
+<!DOCTYPE html>
+<html>
+ <head>
+<meta charset="ISO-8859-1">
+<title>Login Page</title>
+
+ 
+
+<style>  
+h3 {
+    font-family: Calibri;
+    font-style: normal;
+    font-weight: bold;
+    color: SlateBlue;
+    text-align: center;
+    text-decoration: "none";
+}
+
+ 
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+ 
+
+* {
+    box-sizing: border-box;
+}
+
+ 
+
+table {
+    padding: 5px;
+    font-size: 20px;
+    position: absolute;
+    top: -32%;
+    left: 7%;
+    background: white;
+    opacity: 0.9;
+    color: black;
+    margin: 20% auto;
+    border-radius: 2%;
+}
+
+ 
+
+body {
+    background-image: url('https://www.google.com/url?sa=i&url=https%3A%2F%2Fscapertorto.web.app%2Fpicts%2Fpet-store-background.html&psig=AOvVaw05a0bekJbj1EUjuiLYFOCe&ust=1607162229023000&source=images&cd=vfe&ved=0CAIQjRxqFwoTCOj-ifCHtO0CFQAAAAAdAAAAABBI');
+    background-position: center;
+    background-size: cover;
+    
+}
+</style> 
+</head>
+<body>
+
+ 
+
+<h3>Login Page</h3>
+
+ 
+<a href="/"><h4>Home</h4></a>
+
+    ${error}
+    <form method="post" action="${pageContext.request.contextPath }/login">
+        
+        <table border="0" cellpadding="2" cellspacing="2">
+            <tr>
+                <td>UserName</td>
+                <td><input type="text" name="userName"></td>
+            </tr>
+            <tr>
+                <td>Password</td>
+                <td><input type="password" name="customerPassword"></td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td><input type="submit" value="Login"></td>
+            </tr>
+        </table>
+    </form>
+
+ 
+
+</body>
+</html>
+---
+Pets.jsp	
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+
+</body>
+</html>
+-----------
+Registration.jsp
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+<style>
+body {
+	font-family: Arial, Helvetica, sans-serif;
+
+</style>
+</head>
+<body>
+	<form action="addUser" style="border: 1px solid #ccc" method="post">
+		<div class="container">
+			<h1>Sign Up</h1>
+			<p>Please fill in this form to create an account.</p>
+			<hr>
+
+
+
+			<label for="userName"><b>UserName</b></label> <input type="text"
+				placeholder="Enter User Name" name="userName" required> <label
+				for="customerFirstName"><b>FirstName</b></label> <input type="text"
+				placeholder="Enter First Name" name="customerFirstName" required>
+
+			<label for=" customerLastName"><b>LastName</b> </label> <input
+				type="text" placeholder="Enter Last Name" name="customerLastName"
+				required>
+				 <label for=" customerEmail"><b> Email</b>
+			</label> <input type="text" placeholder="Enter Email" name="customerEmail"
+				required> <label for="customerPassword"><b>Password</b>
+
+			</label> <input type="password" placeholder="Enter Password"
+				name="customerPassword" required> <label
+				for="customerMobileNumber"><b>Mobile</b></label> <input type="text"
+				placeholder="Enter Mobile" name="customerMobileNumber" required>
+
+			<label for="CityName"><b>CityName</b></label> <input type="text"
+				placeholder="Enter City Name" name="CityName" required> <label
+				for=" pincode"><b>PinCode</b></label> <input type="text"
+				placeholder="Enter PinCode" name="pincode" required>
+
+			<div class="clearfix">
+				<button type="button" class="cancelbtn">Cancel</button>
+				<button type="submit" class="signupbtn">Sign Up</button>
+			</div>
+		</div>
+	</form>
+</body>
+</html>
+------------
+success.jsp
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1" %>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<style>
+h3{
+  font-family: Calibri;
+  font-size: 25pt;        
+  font-style: normal;
+  font-weight: bold;
+  color:SlateBlue;
+  text-align: center;
+  text-decoration: underline
+}
+body {font-family: Arial, Helvetica, sans-serif;}
+* {box-sizing: border-box;}
+</style>
+<body>
+<h3> ${message}</h3>
+<a href="/">HOME</a>
+
+</body>
+</html>
+------------
+viewsPet.jsp
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+pageEncoding="ISO-8859-1"%>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Pets</title>
+<link
+href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+rel="stylesheet">
+</head>
+<body>
+
+<form:form class="form-horizontal" >
+<table border="2" width="70%" cellpadding="2">
+<tr>
+<th>Pet Id</th>
+
+<th>Pet Type</th>
+<th>Pet Purpose</th>
+<th>Cost</th>
+<th>Age</th>
+<th>Color</th>
+
+<th>Status</th>
+
+ <c:forEach var="pet" items="${list}">
+<tr>
+<td>${pet.petId}</td>
+<td><c:out value="${pet. petType}"></c:out></td>
+<td>${pet.purposre}</td>
+<td>${pet.petCost}</td>
+<td>${pet.petAge}</td>
+<td>${pet.petColour}</td>
+
+<td><a href="/buypet/${pet.petId}">Buy</a></td>
+</tr>
+</c:forEach>
+
+</table>
+<br/>
+
+</form:form>
+</body>
+</html>
+	--------------------------------------------------------------------------
+pom.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.pack</groupId>
+    <artifactId>PetsApplicationProject</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>war</packaging>
+    <name>PetsApplicationProject</name>
+    <description>Demo project for Spring Boot</description>
+<parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.2.6.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <properties>
+        <java.version>1.8</java.version>
+    </properties>
+
+ 
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+ 
+
+      <!--   <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency> -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-jasper</artifactId>
+            <version>9.0.33</version>
+        </dependency>
+        
+        <dependency>
+    <groupId>org.apache.tomcat.embed</groupId>
+    <artifactId>tomcat-embed-jasper</artifactId>
+    <version>9.0.33</version>
+</dependency>
+
+ <dependency>
+    <groupId>javax.servlet</groupId>
+    <artifactId>jstl</artifactId>
+    <version>1.2</version>
+</dependency>
+
+<dependency>
+    <groupId>org.springframework.session</groupId>
+    <artifactId>spring-session-core</artifactId>
+    <version>2.2.0.RELEASE</version>
+</dependency>
+
+ 
+<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+        
+    </dependencies>
+
+ 
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	 
+	
+
